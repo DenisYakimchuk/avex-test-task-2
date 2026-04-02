@@ -1,0 +1,17 @@
+# Налаштування та секрети
+config.yml
+config/settings_data.json
+
+# Системні файли (macOS / Windows)
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+
+# Тимчасові файли та логи
+*.log
+.shopify-cli.json
+
+# Папки збірки (якщо використовуєте Webpack/Vite)
+node_modules/
+dist/
