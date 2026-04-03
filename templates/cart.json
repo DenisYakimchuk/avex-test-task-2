@@ -9,7 +9,7 @@
  */{
   "sections": {
     "cart-section": {
-      "type": "main-cart",
+      "type": "m-main-cart",
       "blocks": {
         "cart-page-title": {
           "type": "_cart-title",
@@ -27,7 +27,7 @@
           "blocks": {}
         },
         "cart-page-items": {
-          "type": "_cart-products",
+          "type": "m-_cart-products",
           "static": true,
           "settings": {
             "gap": 24,

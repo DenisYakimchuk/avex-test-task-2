@@ -1770,6 +1770,27 @@
       },
       {
         "type": "header",
+        "content": "Free Gift with Purchase"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_free_gift",
+        "label": "Enable free gift",
+        "default": false
+      },
+      {
+        "type": "number",
+        "id": "free_gift_threshold",
+        "label": "Gift threshold",
+        "default": 100
+      },
+      {
+        "type": "product",
+        "id": "free_gift_product",
+        "label": "Gift product"
+      },
+      {
+        "type": "header",
         "content": "t:content.product_media"
       },
       {
