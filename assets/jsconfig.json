@@ -6,7 +6,7 @@
     "noImplicitAny": true,
     "noUncheckedIndexedAccess": true,
     "strictNullChecks": true,
-    "types": ["./global.d.ts"],
+    "types": ["./global.d.ts", "./custom.d.ts"],
     "paths": {
       "@theme/*": ["./*"]
     }
