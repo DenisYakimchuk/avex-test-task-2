@@ -14,7 +14,7 @@ import {
   QuantitySelectorUpdateEvent,
   CartAddEvent,
   DiscountUpdateEvent,
-} from '@theme/events';
+} from '@theme/m-events';
 import { cartPerformance } from '@theme/performance';
 
 /** @typedef {import('./utilities').TextComponent} TextComponent */
@@ -393,6 +393,9 @@ class CartItemsComponent extends Component {
   /**
    * Removes the free gift from the cart.
    * @param {Object} cart
+   * @param {Array<{variant_id: number, quantity: number, properties: {_free_gift: string}}>} [cart.items] - The cart items.
+   * @param {number} [cart.total_price] - The cart total price.
+   * @param {number} [cart.item_count] - The cart item count.
    */
   #removeFreeGift(cart) {
     if (!cart.items) return;
@@ -440,8 +443,13 @@ class CartItemsComponent extends Component {
   /**
    * Checks gift threshold and acts accordingly.
    * @param {Object} cart
+   * @param {Array<{variant_id: number, quantity: number, properties: {_free_gift: string}}>} [cart.items] - The cart items.
+   * @param {number} [cart.total_price] - The cart total price.
+   * @param {number} [cart.item_count] - The cart item count.
    */
   #checkFreeGiftThreshold(cart) {
+    if (!cart.items || typeof cart.total_price !== 'number') return;
+
     if (!Theme.freeGift?.enabled) return;
     const threshold = Number(Theme.freeGift.threshold) * 100;
     const subtotal = Number(cart.total_price);
