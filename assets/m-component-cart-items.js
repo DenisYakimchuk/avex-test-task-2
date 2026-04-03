@@ -35,6 +35,8 @@ class CartItemsComponent extends Component {
   connectedCallback() {
     super.connectedCallback();
 
+    console.debug('[free-gift] cart-items-component connected');
+
     document.addEventListener(ThemeEvents.cartUpdate, this.#handleCartUpdate);
     document.addEventListener(ThemeEvents.discountUpdate, this.handleDiscountUpdate);
     document.addEventListener(ThemeEvents.quantitySelectorUpdate, this.#debouncedOnChange);
@@ -247,16 +249,26 @@ class CartItemsComponent extends Component {
       sectionRenderer.renderSection(this.sectionId, { cache: false });
       return;
     }
-    if (event.target === this) return;
 
-    const cartItemsHtml = event.detail.data.sections?.[this.sectionId];
-    if (cartItemsHtml) {
-      morphSection(this.sectionId, cartItemsHtml);
+    const isFreeGiftEvent = event.detail?.data?.source === 'free-gift';
+    const isOwnCartItemsEvent = event.target === this && event.detail?.data?.source === 'cart-items-component';
 
-      // Update button states for all cart quantity selectors after morph
-      this.#updateCartQuantitySelectorButtonStates();
-    } else {
-      sectionRenderer.renderSection(this.sectionId, { cache: false });
+    // Only perform DOM morph for non-own cart-items events. Own cart item operations already morph directly.
+    if (!isOwnCartItemsEvent) {
+      const cartItemsHtml = event.detail.data.sections?.[this.sectionId];
+      if (cartItemsHtml) {
+        morphSection(this.sectionId, cartItemsHtml);
+
+        // Update button states for all cart quantity selectors after morph
+        this.#updateCartQuantitySelectorButtonStates();
+      } else {
+        sectionRenderer.renderSection(this.sectionId, { cache: false });
+      }
+    }
+
+    const cart = event.detail.resource;
+    if (!isFreeGiftEvent && cart?.items) {
+      this.#checkFreeGiftThreshold(cart);
     }
   };
 
@@ -306,6 +318,142 @@ class CartItemsComponent extends Component {
   #updateCartQuantitySelectorButtonStates() {
     for (const selector of document.querySelectorAll('cart-quantity-selector-component')) {
       /** @type {any} */ (selector).updateButtonStates?.();
+    }
+  }
+
+  /**
+   * Gets the free-gift variant ID from Theme config.
+   * @returns {string}
+   */
+  #getGiftVariantId() {
+    const giftVariantId = Theme.freeGift?.variantId;
+
+    if (!giftVariantId) throw new Error('Gift variant id missing');
+
+    return giftVariantId;
+  }
+
+  #getCartSectionIds() {
+    const cartItems = document.querySelectorAll('cart-items-component');
+    const sectionIds = new Set([this.sectionId]);
+
+    cartItems.forEach((item) => {
+      if (item instanceof HTMLElement && item.dataset.sectionId) {
+        sectionIds.add(item.dataset.sectionId);
+      }
+    });
+
+    return Array.from(sectionIds).join(',');
+  }
+
+  /**
+   * Adds the free gift to the cart.
+   */
+  #addFreeGift() {
+    const sections = this.#getCartSectionIds();
+    const body = JSON.stringify({
+      items: [{
+        id: Number(this.#getGiftVariantId()),
+        quantity: 1,
+        properties: { _free_gift: 'true' },
+      }],
+      sections,
+      sections_url: window.location.pathname,
+    });
+
+    fetch(Theme.routes.cart_add_url, fetchConfig('json', { body }))
+      .then((response) => response.text())
+      .then((responseText) => {
+        const data = JSON.parse(responseText);
+
+        if (data.status) {
+          return;
+        }
+
+        if (data.sections?.[this.sectionId]) {
+          morphSection(this.sectionId, data.sections[this.sectionId], {
+            mode: this.isDrawer ? 'hydration' : 'full',
+          });
+          this.#updateCartQuantitySelectorButtonStates();
+        }
+
+        document.dispatchEvent(
+          new CartUpdateEvent(data, this.id, {
+            source: 'free-gift',
+            sections: data.sections,
+            itemCount: data.item_count,
+          })
+        );
+      })
+      .catch((error) => {
+        console.error('[free-gift] add failed', error);
+      });
+  }
+
+  /**
+   * Removes the free gift from the cart.
+   * @param {Object} cart
+   */
+  #removeFreeGift(cart) {
+    if (!cart.items) return;
+
+    const giftLine = cart.items.findIndex((item) => item.properties?._free_gift === 'true');
+    if (giftLine === -1) return;
+
+    const sections = this.#getCartSectionIds();
+    const body = JSON.stringify({
+      line: giftLine + 1,
+      quantity: 0,
+      sections,
+      sections_url: window.location.pathname,
+    });
+
+    fetch(Theme.routes.cart_change_url, fetchConfig('json', { body }))
+      .then((response) => response.text())
+      .then((responseText) => {
+        const data = JSON.parse(responseText);
+
+        if (data.status) {
+          return;
+        }
+
+        if (data.sections?.[this.sectionId]) {
+          morphSection(this.sectionId, data.sections[this.sectionId], {
+            mode: this.isDrawer ? 'hydration' : 'full',
+          });
+          this.#updateCartQuantitySelectorButtonStates();
+        }
+
+        document.dispatchEvent(
+          new CartUpdateEvent(data, this.id, {
+            source: 'free-gift',
+            sections: data.sections,
+            itemCount: data.item_count,
+          })
+        );
+      })
+      .catch((error) => {
+        console.error('[free-gift] remove failed', error);
+      });
+  }
+
+  /**
+   * Checks gift threshold and acts accordingly.
+   * @param {Object} cart
+   */
+  #checkFreeGiftThreshold(cart) {
+    if (!Theme.freeGift?.enabled) return;
+    const threshold = Number(Theme.freeGift.threshold) * 100;
+    const subtotal = Number(cart.total_price);
+
+    const hasGift = cart.items?.some((item) => item.properties?._free_gift === 'true');
+
+    if (subtotal >= threshold && !hasGift) {
+      this.#addFreeGift();
+    }
+
+    if (subtotal < threshold && hasGift) {
+      this.#removeFreeGift(cart);
     }
   }
 

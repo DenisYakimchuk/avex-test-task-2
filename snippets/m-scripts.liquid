@@ -16,7 +16,7 @@
       "@theme/morph": "{{ 'morph.js' | asset_url }}",
       "@theme/paginated-list": "{{ 'paginated-list.js' | asset_url }}",
       "@theme/performance": "{{ 'performance.js' | asset_url }}",
-      "@theme/product-form": "{{ 'product-form.js' | asset_url }}",
+      "@theme/product-form": "{{ 'm-product-form.js' | asset_url }}",
       "@theme/recently-viewed-products": "{{ 'recently-viewed-products.js' | asset_url }}",
       "@theme/scrolling": "{{ 'scrolling.js' | asset_url }}",
       "@theme/section-renderer": "{{ 'section-renderer.js' | asset_url }}",
@@ -148,7 +148,7 @@
   fetchpriority="low"
 ></script>
 <script
-  src="{{ 'product-form.js' | asset_url }}"
+  src="{{ 'm-product-form.js' | asset_url }}"
   type="module"
   fetchpriority="low"
 ></script>
@@ -300,6 +300,11 @@
     },
     template: {
       name: '{{ template }}',
+    },
+    freeGift: {
+      enabled: {{ settings.enable_free_gift | default: false }},
+      threshold: {{ settings.free_gift_threshold }},
+      variantId: '{{ settings.free_gift_product.selected_or_first_available_variant.id }}',
     },
   };
 </script>
