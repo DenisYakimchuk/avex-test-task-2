@@ -35,8 +35,6 @@ class CartItemsComponent extends Component {
   connectedCallback() {
     super.connectedCallback();
 
-    console.debug('[free-gift] cart-items-component connected');
-
     document.addEventListener(ThemeEvents.cartUpdate, this.#handleCartUpdate);
     document.addEventListener(ThemeEvents.discountUpdate, this.handleDiscountUpdate);
     document.addEventListener(ThemeEvents.quantitySelectorUpdate, this.#debouncedOnChange);
