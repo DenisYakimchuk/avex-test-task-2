@@ -14,7 +14,7 @@ import {
   QuantitySelectorUpdateEvent,
   CartAddEvent,
   DiscountUpdateEvent,
-} from '@theme/m-events';
+} from '@theme/events';
 import { cartPerformance } from '@theme/performance';
 
 /** @typedef {import('./utilities').TextComponent} TextComponent */
